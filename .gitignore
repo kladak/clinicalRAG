@@ -1,0 +1,30 @@
+.DS_Store
+
+# Local environment
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+backend/.venv/
+backend/venv/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Runtime storage
+audit.db
+chroma_db/
+
+# Accidental nested project copy
+/clinicalrag/
+
+# Frontend
+node_modules/
+dist/
+
+# Logs
+*.log
+*.zip
