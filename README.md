@@ -6,7 +6,7 @@ ClinicalRAG is a portfolio project built to show practical AI engineering: retri
 
 ## Screenshot
 
-Add a production screenshot after deploying the frontend. The local app runs at `http://localhost:5173`.
+![ClinicalRAG — Guideline Query Console](docs/screenshot.png)
 
 ## Why This Exists
 
@@ -88,7 +88,7 @@ README.md           setup, API, demo, deployment
 ### Backend
 
 ```bash
-cd /Users/karimladak/clinicalrag/backend
+cd backend
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -116,7 +116,7 @@ First startup seeds the `clinical_guidelines` collection if it is empty.
 Open a second terminal:
 
 ```bash
-cd /Users/karimladak/clinicalrag/frontend
+cd frontend
 npm install
 npm run dev
 ```
@@ -160,7 +160,7 @@ Expected behavior: low confidence, warning/refusal, and no fabricated clinical a
 Run:
 
 ```bash
-cd /Users/karimladak/clinicalrag/backend
+cd backend
 source .venv/bin/activate
 python run_evals.py
 ```
