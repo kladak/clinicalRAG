@@ -157,7 +157,7 @@ Expected behavior: low confidence, warning/refusal, and no fabricated clinical a
 
 ## Evaluation Harness
 
-Run:
+Live (needs Groq + seeded Chroma corpus):
 
 ```bash
 cd backend
@@ -165,7 +165,20 @@ source .venv/bin/activate
 python run_evals.py
 ```
 
-The harness runs known clinical queries and an off-topic refusal case. It checks source titles, expected medical terms, and grounding score thresholds.
+Offline / CI-friendly extractive path (no Groq calls):
+
+```bash
+MOCK_LLM=1 python run_evals.py --offline
+```
+
+Unit tests (no embeddings download required for the pure-logic suite):
+
+```bash
+cd backend
+pytest tests/test_guards.py tests/test_decompose.py tests/test_evaluator.py tests/test_citations.py tests/test_config.py -q
+```
+
+The harness expands beyond the original demo queries (compound questions, extra refusal cases). It checks source titles, expected medical terms, grounding thresholds, and explicit refusal behavior. Numbers from this harness are local regression signals only — not clinical performance claims.
 
 ## API Reference
 
@@ -243,6 +256,17 @@ Set:
 ```bash
 VITE_API_URL=https://your-railway-backend.up.railway.app
 ```
+
+## When ClinicalRAG Should Refuse
+
+ClinicalRAG is educational/research CDS, not a medical device. It should refuse (or return a low-confidence warning) when:
+
+- The question is clearly off-topic (trivia, weather, jokes, non-clinical chit-chat).
+- No guideline chunks in the local corpus look relevant after retrieval + grading.
+- Post-generation checks catch dosage claims that never appear in retrieved sources.
+- Grounding score is too low to present the answer as guideline-supported.
+
+Refusal is a product feature here, not a failure mode. A confident wrong answer is worse than "I cannot find this in the available guidelines." These heuristics are engineering guardrails — they are **not** clinical validation, and scores from the local eval harness are not performance claims for real patient care.
 
 ## Limitations
 
