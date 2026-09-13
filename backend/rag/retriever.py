@@ -6,7 +6,7 @@ import chromadb
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 
-CHROMA_PATH = os.getenv("CHROMA_PATH", "./chroma_db")
+from config import get_settings
 
 _client = None
 _encoder = None
@@ -16,16 +16,21 @@ def get_client():
     global _client
     if _client is None:
         _client = chromadb.PersistentClient(
-            path=CHROMA_PATH,
+            path=get_settings().chroma_path,
             settings=Settings(anonymized_telemetry=False),
         )
     return _client
 
 
+def reset_client() -> None:
+    global _client
+    _client = None
+
+
 def get_encoder():
     global _encoder
     if _encoder is None:
-        _encoder = SentenceTransformer("all-MiniLM-L6-v2")
+        _encoder = SentenceTransformer(get_settings().embedding_model)
     return _encoder
 
 
