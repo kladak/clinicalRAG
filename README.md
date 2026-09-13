@@ -2,7 +2,7 @@
 
 Grounded clinical decision support API and physician-facing web console for answering guideline questions from a local clinical document collection.
 
-ClinicalRAG is a portfolio project built to show practical AI engineering: retrieval, source-grounded generation, clinical guardrails, evaluation, audit logging, and deployment-ready app structure. It is not intended for real patient care.
+ClinicalRAG is a portfolio project for Karim Ladak ([github.com/kladak](https://github.com/kladak)). It shows practical Applied AI engineering: query decomposition, retrieval, source-grounded generation, citation fidelity, refusal/hallucination guards, evaluation, audit logging, and a deployment-ready app structure. **Educational / research CDS only — not a medical device, not for real patient care.**
 
 ## Screenshot
 
@@ -10,77 +10,83 @@ ClinicalRAG is a portfolio project built to show practical AI engineering: retri
 
 ## Why This Exists
 
-Clinical LLM demos often fail in the exact place that matters: they can sound confident without showing where an answer came from. ClinicalRAG keeps the model constrained to ingested guideline text, returns source citations, computes a grounding score, and records an audit trail without storing raw physician queries.
+Clinical LLM demos often fail where it matters: they sound confident without showing where an answer came from. ClinicalRAG keeps the model constrained to ingested guideline text, returns source citations (including per-sentence attribution), computes a grounding score, refuses off-topic or ungrounded dosage claims, and records an audit trail without storing raw physician queries.
 
-The goal is to demonstrate the kind of backend architecture a clinical AI team would care about, while keeping the UI restrained and operational rather than flashy.
+The UI stays restrained and operational rather than flashy. The interesting work is in the graph.
 
-## Architecture
+## Architecture (as implemented)
 
 ```text
 React physician console
         |
         v
-FastAPI /api/v1/query
+FastAPI /api/v1/query  (+ rate limit, request IDs, typed models)
         |
         v
 LangGraph StateGraph
         |
-        +--> retrieve_node
-        |       ChromaDB + all-MiniLM-L6-v2 embeddings
-        |       deterministic query/source reranking
+        +--> guard_query
+        |       off-topic / non-clinical refusal
         |
-        +--> grade_relevance_node
-        |       Groq llama-3.1-8b-instant
+        +--> decompose
+        |       compound split + clinical term lexicon (no LLM)
         |
-        +--> conditional edge
-        |       relevant docs -> generate
-        |       no relevant docs -> evaluate/refuse
+        +--> retrieve
+        |       multi-query ChromaDB + MiniLM embeddings
+        |       deterministic rerank + merge cap
         |
-        +--> generate_node
-        |       Groq llama-3.3-70b-versatile
+        +--> grade_relevance
+        |       Groq llama-3.1-8b-instant  |  MOCK_LLM → score floor
         |
-        +--> evaluate_grounding_node
-        |       sentence attribution + content-token overlap
+        +--> generate  (or skip on refusal / empty evidence)
+        |       Groq llama-3.3-70b-versatile  |  MOCK_LLM → extractive
         |
+        +--> evaluate_grounding
+        |       sentence attribution + unsupported-dosage check
+        |       citation coverage
         v
-Answer + citations + hashed audit log
+Answer + citations + refusal_reason + hashed audit log
 ```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for design rationale and production tradeoffs.
 
 ## Key Features
 
-- LangGraph RAG pipeline with retrieve, grade, generate, and grounding-evaluation nodes.
-- Local embeddings with `sentence-transformers/all-MiniLM-L6-v2`.
-- ChromaDB persisted to disk for guideline chunks and metadata.
-- Groq generation with `llama-3.3-70b-versatile`.
-- Groq grading with `llama-3.1-8b-instant`.
-- Deterministic reranking so the most query-relevant chunks appear first in the source list.
-- Hybrid grounding score that handles both quoted and paraphrased guideline answers.
-- HIPAA-aware audit logging that stores query hashes, not raw query text.
-- React console with query examples, source citations, confidence label, grounding bar, audit view, and document ingestion.
-- Evaluation harness for checking expected sources, grounding scores, and off-topic refusal behavior.
+- LangGraph pipeline: guard → decompose → retrieve → grade → generate → grounding/citations.
+- Deterministic query decomposition for compound clinical questions (offline-friendly).
+- Local embeddings (`all-MiniLM-L6-v2`) + ChromaDB persistence.
+- Groq generation/grading with a first-class `MOCK_LLM` extractive path for CI.
+- Per-sentence citation mapping and hybrid grounding score.
+- Refusal guards for off-topic prompts and unsupported dosage claims.
+- HIPAA-aware audit logging (query hashes, not raw text).
+- FastAPI hardening: Pydantic models, readiness probe, structured logs, in-process rate limit.
+- Eval harness + unit/API tests runnable without API keys.
+- `docker-compose` one-command local bring-up; GitHub Actions CI.
 
 ## Stack
 
 - Backend: Python 3.11, FastAPI, LangGraph, LangChain Groq, ChromaDB, sentence-transformers, SQLite
 - Frontend: React 18, Vite, Tailwind CSS v3, Axios
-- LLM provider: Groq
-- Deployment: Railway backend, Vercel frontend
+- LLM provider: Groq (optional when `MOCK_LLM=1`)
+- Deployment: Railway backend, Vercel frontend; local via Docker Compose
 
 ## Repository Layout
 
 ```text
 backend/
-  api/              FastAPI routes and Pydantic response models
-  audit/            SQLite audit logger
+  api/              routes, Pydantic models, rate limiter
+  audit/            SQLite audit logger (hashed queries)
+  config.py         env-backed settings
+  logging_config.py JSON / text logging
   data/             seed clinical guideline content
-  rag/              ingestion, retrieval, LangGraph pipeline, grounding evaluator
-  eval_cases.json   expected demo/eval queries
-  run_evals.py      local evaluation harness
-frontend/
-  src/              React app and components
-  public/           favicon and static assets
-ARCHITECTURE.md     system design notes and production tradeoffs
-README.md           setup, API, demo, deployment
+  rag/              decompose, retrieve, guards, citations, pipeline, evaluator
+  tests/            offline unit + API contract tests
+  eval_cases.json   regression cases (not clinical validation)
+  run_evals.py      harness (--mock/--offline, --json)
+frontend/           restrained physician console
+docker-compose.yml  backend + frontend local bring-up
+.github/workflows/  CI for offline tests
+ARCHITECTURE.md     design notes
 ```
 
 ## Local Setup
@@ -95,25 +101,23 @@ pip install -r requirements.txt
 cp -n .env.example .env
 ```
 
-Edit `backend/.env` and set your Groq key:
+Edit `backend/.env`:
 
 ```bash
-GROQ_API_KEY=your_groq_key_here
+GROQ_API_KEY=your_groq_key_here   # optional if MOCK_LLM=1
 CHROMA_PATH=./chroma_db
 AUDIT_DB_PATH=./audit.db
+MOCK_LLM=0
+RATE_LIMIT_PER_MINUTE=30
 ```
-
-Start the API:
 
 ```bash
 uvicorn main:app --reload
 ```
 
-First startup seeds the `clinical_guidelines` collection if it is empty.
+First startup seeds `clinical_guidelines` if empty.
 
 ### Frontend
-
-Open a second terminal:
 
 ```bash
 cd frontend
@@ -121,15 +125,18 @@ npm install
 npm run dev
 ```
 
-Open:
+Open `http://localhost:5173`.
 
-```text
-http://localhost:5173
+### Docker Compose
+
+```bash
+# optional: export GROQ_API_KEY=...
+docker compose up --build
 ```
 
-## Demo Script
+API: `http://localhost:8000` · UI: `http://localhost:5173`
 
-Use these queries in the UI:
+## Demo Script
 
 ```text
 What SGLT2 inhibitors are recommended for heart failure?
@@ -137,66 +144,53 @@ What are the diagnostic criteria for sepsis?
 What are first-line treatments for HFrEF?
 How should atrial fibrillation stroke risk be assessed?
 What anticoagulants are on the WHO Essential Medicines List?
+What are first-line treatments for HFrEF? Also which SGLT2 inhibitors are recommended?
 ```
 
-What to point out:
+Point out: short clinical answers, source cards, grounding score, citation coverage, Audit tab (hashes only), API + Groq status in the top bar.
 
-- The answer is short and clinical, not chatty.
-- Source cards show the guideline chunks used.
-- Grounding score is high for on-topic guideline questions.
-- The Audit tab stores query hashes, not raw query text.
-- The top bar shows both API status and Groq configuration status.
-
-Guardrail test:
+Guardrail tests:
 
 ```text
 What is the capital of France?
+What is the weather in Toronto tomorrow?
 ```
 
-Expected behavior: low confidence, warning/refusal, and no fabricated clinical answer.
+Expected: refusal / low confidence, `refusal_reason` set, no fabricated clinical answer.
 
-## Evaluation Harness
+## Tests & Evaluation
 
-Live (needs Groq + seeded Chroma corpus):
+Unit / contract tests (no embedding download for the pure-logic suite):
 
 ```bash
 cd backend
 source .venv/bin/activate
+pytest -q tests/test_config.py tests/test_guards.py tests/test_decompose.py \
+  tests/test_evaluator.py tests/test_citations.py tests/test_rate_limit.py
+# API contracts stub retrieval (needs fastapi/httpx from requirements.txt):
+pytest -q tests/test_api_unit.py
+```
+
+Eval harness:
+
+```bash
+# Live path (Groq + seeded Chroma)
 python run_evals.py
-```
 
-Offline / CI-friendly extractive path (no Groq calls):
-
-```bash
+# Offline extractive path — CI-friendly, no API key
 MOCK_LLM=1 python run_evals.py --offline
+# alias: python run_evals.py --mock
 ```
 
-Unit tests (no embeddings download required for the pure-logic suite):
-
-```bash
-cd backend
-pytest tests/test_guards.py tests/test_decompose.py tests/test_evaluator.py tests/test_citations.py tests/test_config.py -q
-```
-
-The harness expands beyond the original demo queries (compound questions, extra refusal cases). It checks source titles, expected medical terms, grounding thresholds, and explicit refusal behavior. Numbers from this harness are local regression signals only — not clinical performance claims.
+Harness checks are **local regression signals only** — not clinical performance claims, not device validation.
 
 ## API Reference
 
-### Health
+### Liveness / readiness
 
 ```bash
 curl http://localhost:8000/health | python -m json.tool
-```
-
-Health includes collection stats and LLM provider status:
-
-```json
-{
-  "status": "ok",
-  "version": "1.0.0",
-  "llm_provider": "groq",
-  "llm_configured": true
-}
+curl http://localhost:8000/api/v1/ready | python -m json.tool
 ```
 
 ### Query
@@ -211,70 +205,35 @@ curl -X POST http://localhost:8000/api/v1/query \
   }' | python -m json.tool
 ```
 
-### Ingest
+Response includes `sources`, `grounding_score`, `confidence`, optional `warning` / `refusal_reason`, `citations`, and `citation_coverage`.
 
-```bash
-curl -X POST http://localhost:8000/api/v1/ingest \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Example Hospital Protocol",
-    "content": "Patients with suspected sepsis should have lactate measured and blood cultures obtained before antibiotics when this does not delay treatment.",
-    "document_type": "protocol",
-    "source_url": "https://example.org/protocol",
-    "collection": "clinical_guidelines"
-  }'
-```
+### Ingest / audit
 
-### Audit
-
-```bash
-curl http://localhost:8000/api/v1/audit | python -m json.tool
-```
-
-## Deployment
-
-### Railway Backend
-
-Deploy the `backend/` directory.
-
-Set Railway environment variables:
-
-```bash
-GROQ_API_KEY=your_key
-CHROMA_PATH=/data/chroma_db
-AUDIT_DB_PATH=/data/audit.db
-```
-
-Add a Railway volume mounted at `/data` so ChromaDB and SQLite persist across deploys.
-
-### Vercel Frontend
-
-Deploy the `frontend/` directory.
-
-Set:
-
-```bash
-VITE_API_URL=https://your-railway-backend.up.railway.app
-```
+Same shapes as before — see `/api/v1/ingest` and `/api/v1/audit`. Raw queries are never stored in the audit DB.
 
 ## When ClinicalRAG Should Refuse
 
-ClinicalRAG is educational/research CDS, not a medical device. It should refuse (or return a low-confidence warning) when:
+- Clearly off-topic (trivia, weather, jokes).
+- No relevant guideline chunks after retrieval + grading.
+- Post-generation checks find dosage claims absent from retrieved sources.
+- Grounding score too low to present as guideline-supported.
 
-- The question is clearly off-topic (trivia, weather, jokes, non-clinical chit-chat).
-- No guideline chunks in the local corpus look relevant after retrieval + grading.
-- Post-generation checks catch dosage claims that never appear in retrieved sources.
-- Grounding score is too low to present the answer as guideline-supported.
+Refusal is a product feature. A confident wrong answer is worse than "I cannot find this in the available guidelines."
 
-Refusal is a product feature here, not a failure mode. A confident wrong answer is worse than "I cannot find this in the available guidelines." These heuristics are engineering guardrails — they are **not** clinical validation, and scores from the local eval harness are not performance claims for real patient care.
+## Deployment
+
+**Railway (backend):** deploy `backend/`, set `GROQ_API_KEY`, `CHROMA_PATH=/data/chroma_db`, `AUDIT_DB_PATH=/data/audit.db`, mount volume at `/data`.
+
+**Vercel (frontend):** deploy `frontend/`, set `VITE_API_URL` to the Railway URL.
 
 ## Limitations
 
-- This is not a medical device and should not be used for real patient care.
-- The seed corpus is intentionally small for demo purposes.
-- ChromaDB local persistence is good for a portfolio deployment, but production multi-instance deployments should use shared vector storage.
-- SQLite audit logging should become PostgreSQL in production.
-- A production HIPAA deployment would require BAAs, encryption controls, access control, monitoring, incident response, and formal clinical validation.
+- Not a medical device; not for real patient care.
+- Seed corpus is intentionally small.
+- In-process rate limiting is demo-grade; multi-replica needs shared limits.
+- Chroma local persistence is fine for a portfolio deploy; production needs shared vector storage.
+- SQLite audit → PostgreSQL in production.
+- Real HIPAA deployments need BAAs, encryption, access control, monitoring, incident response, and formal clinical validation.
 
 ## Live Demo Links
 
