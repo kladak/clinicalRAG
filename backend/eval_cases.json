@@ -35,8 +35,36 @@
     "min_grounding": 0.55
   },
   {
+    "name": "COVID outpatient antiviral",
+    "query": "What is preferred first-line antiviral therapy for high-risk outpatient COVID-19?",
+    "expected_source": "COVID",
+    "expected_terms": ["nirmatrelvir", "ritonavir"],
+    "min_grounding": 0.5
+  },
+  {
+    "name": "Septic shock vasopressor",
+    "query": "What is first-line vasopressor therapy for septic shock?",
+    "expected_source": "Sepsis",
+    "expected_terms": ["norepinephrine", "map"],
+    "min_grounding": 0.5
+  },
+  {
+    "name": "Compound HFrEF and SGLT2",
+    "query": "What are first-line treatments for HFrEF and which SGLT2 inhibitors are recommended?",
+    "expected_source": "Heart Failure",
+    "expected_terms": ["sglt2", "dapagliflozin"],
+    "min_grounding": 0.5,
+    "expect_compound": true
+  },
+  {
     "name": "Off-topic refusal",
     "query": "What is the capital of France?",
+    "expect_refusal": true,
+    "max_grounding": 0.1
+  },
+  {
+    "name": "Weather refusal",
+    "query": "What is the weather in Toronto tomorrow?",
     "expect_refusal": true,
     "max_grounding": 0.1
   }
