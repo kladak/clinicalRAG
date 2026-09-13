@@ -74,7 +74,7 @@ function AuditView() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {entries.map((entry) => (
-                <tr className="text-slate-700" key={entry.id}>
+                <tr className="text-slate-700" key={entry.query_id || entry.id || entry.timestamp}>
                   <td className="whitespace-nowrap px-5 py-3">
                     {new Date(entry.timestamp).toLocaleString()}
                   </td>

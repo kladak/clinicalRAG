@@ -1,0 +1,39 @@
+name: backend-tests
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-tests.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-tests.yml"
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      # Unit suite covers guards/decompose/grounding/citations without loading
+      # sentence-transformers or spinning Chroma — keep CI lean.
+      - name: Install lightweight test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest==8.2.0 pydantic==2.8.2 python-dotenv==1.0.1
+      - name: Run offline unit tests
+        env:
+          MOCK_LLM: "1"
+          ANONYMIZED_TELEMETRY: "False"
+        run: |
+          python -m pytest tests/test_config.py tests/test_guards.py \
+            tests/test_decompose.py tests/test_evaluator.py \
+            tests/test_citations.py tests/test_rate_limit.py -q
