@@ -1,8 +1,9 @@
-"""Citation fidelity helpers.
+"""Per-sentence source attribution helpers.
 
 Map answer sentences back to retrieved chunks so the API can return
-per-sentence source titles. Educational CDS should make attribution
-visible — not just a grounding score float.
+overlap-based source titles. `grounded` means attribution overlap met a
+minimum ratio — aligned with evaluator content-token thresholds, not a
+clinical faithfulness certificate.
 """
 
 from __future__ import annotations
@@ -28,7 +29,13 @@ def split_answer_sentences(answer: str) -> list[str]:
     ]
 
 
-def _best_source_titles(sentence: str, docs: list[dict], top_n: int = 2) -> list[str]:
+# Keep citation "grounded" aligned with evaluator content-token bar.
+_MIN_ATTRIBUTION_RATIO = 0.30
+
+
+def _best_source_titles(
+    sentence: str, docs: list[dict], top_n: int = 2, min_ratio: float = _MIN_ATTRIBUTION_RATIO
+) -> list[str]:
     content = _content_tokens(sentence)
     if not content:
         return []
@@ -39,6 +46,8 @@ def _best_source_titles(sentence: str, docs: list[dict], top_n: int = 2) -> list
         if not overlap:
             continue
         ratio = len(overlap) / max(len(content), 1)
+        if ratio < min_ratio:
+            continue
         title = doc.get("metadata", {}).get("title", "Unknown")
         scored.append((ratio, title))
     scored.sort(reverse=True)

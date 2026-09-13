@@ -2,7 +2,7 @@
 
 Grounded clinical decision support API and physician-facing web console for answering guideline questions from a local clinical document collection.
 
-ClinicalRAG is a portfolio project for Karim Ladak ([github.com/kladak](https://github.com/kladak)). It shows practical Applied AI engineering: query decomposition, retrieval, source-grounded generation, citation fidelity, refusal/hallucination guards, evaluation, audit logging, and a deployment-ready app structure. **Educational / research CDS only — not a medical device, not for real patient care.**
+ClinicalRAG is a portfolio project for Karim Ladak ([github.com/kladak](https://github.com/kladak)). It shows practical Applied AI engineering: query decomposition, retrieval, source-grounded generation, overlap-based citation attribution, off-topic/dosage refusal checks, evaluation, hashed audit logging, and a deployable demo skeleton. **Educational / research CDS only — not a medical device, not for real patient care.**
 
 ## Screenshot
 
@@ -56,12 +56,12 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for design rationale and production trade
 - Deterministic query decomposition for compound clinical questions (offline-friendly).
 - Local embeddings (`all-MiniLM-L6-v2`) + ChromaDB persistence.
 - Groq generation/grading with a first-class `MOCK_LLM` extractive path for CI.
-- Per-sentence citation mapping and hybrid grounding score.
-- Refusal guards for off-topic prompts and unsupported dosage claims.
-- HIPAA-aware audit logging (query hashes, not raw text).
+- Per-sentence source attribution (content-token overlap) plus a separate hybrid grounding score.
+- Heuristic refusal for off-topic prompts and unsupported dosage strings (not a general faithfulness model).
+- Query-hash audit logging (no raw query storage) — privacy-minimizing, not a HIPAA compliance claim.
 - FastAPI hardening: Pydantic models, readiness probe, structured logs, in-process rate limit.
 - Eval harness + unit/API tests runnable without API keys.
-- `docker-compose` one-command local bring-up; GitHub Actions CI.
+- `docker-compose` local bring-up; GitHub Actions runs the lean offline unit suite (evals/compose verified locally).
 
 ## Stack
 
@@ -226,7 +226,23 @@ Refusal is a product feature. A confident wrong answer is worse than "I cannot f
 
 **Vercel (frontend):** deploy `frontend/`, set `VITE_API_URL` to the Railway URL.
 
+
+## Verification (2026-09-13)
+
+Local gates run on this branch (MOCK_LLM / extractive path unless noted):
+
+- `pytest`: **23 passed**
+- `python run_evals.py --offline --json` with Chroma + sentence-transformers: **10/10** cases passed (regression signal only — not clinical accuracy)
+- Native uvicorn smoke: `/health`, `/api/v1/ready`, clinical query, off-topic refusal
+- `docker compose` backend: healthy; sepsis query grounded; France refused as `off_topic`
+- Frontend: `npm run build` succeeded
+- GitHub Actions `backend-tests` / `unit`: success on PR branch
+
+Do not quote these as clinical performance metrics.
+
 ## Limitations
+
+- `/api/v1/ingest` and `/api/v1/audit` are **unauthenticated** demo endpoints. Fine for localhost; do not expose a public deploy without gating or disabling ingest. Compose defaults `CORS_ORIGINS=*`.
 
 - Not a medical device; not for real patient care.
 - Seed corpus is intentionally small.

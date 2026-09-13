@@ -122,7 +122,7 @@ async def query_endpoint(request: QueryRequest, raw: Request):
         raise
     except Exception as e:
         logger.exception("query_failed", extra={"event": "query_failed"})
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        raise HTTPException(status_code=500, detail="internal_error") from e
 
 
 @router.post("/ingest", response_model=IngestResponse)
@@ -143,7 +143,7 @@ async def ingest_endpoint(request: IngestRequest):
         )
     except Exception as e:
         logger.exception("ingest_failed", extra={"event": "ingest_failed"})
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        raise HTTPException(status_code=500, detail="internal_error") from e
 
 
 @router.get("/health", response_model=HealthResponse)

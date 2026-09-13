@@ -31,7 +31,7 @@ Cosine similarity is for retrieval, not attribution. The evaluator checks whethe
 
 These are engineering signals for demos and regression tests — **not** clinical validation.
 
-## Refusal / hallucination guards
+## Refusal / dosage heuristics
 
 `rag/guards.py` encodes product policy:
 
@@ -51,9 +51,9 @@ These are engineering signals for demos and regression tests — **not** clinica
 - In-process fixed-window rate limit on `/query` (single-instance demo).
 - `/health` liveness vs `/api/v1/ready` readiness (audit DB + vector store listable).
 
-## HIPAA-aware audit
+## Query-hash audit (not HIPAA certification)
 
-Audit rows store SHA-256(query), collection, source count, grounding score, latency, timestamp, and id — not the physician's text. HIPAA-aware is not a compliance claim. Production PHI handling still needs BAAs, encryption, access control, retention policy, and incident response.
+Audit rows store SHA-256(query), collection, source count, grounding score, latency, timestamp, and id — not the physician's text. This is privacy-minimizing demo hygiene, not a HIPAA compliance claim. Production PHI handling still needs BAAs, encryption, access control, retention policy, and incident response. Ingest/audit HTTP routes are unauthenticated in this demo.
 
 ## Why ChromaDB
 
