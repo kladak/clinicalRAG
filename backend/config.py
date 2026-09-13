@@ -88,7 +88,7 @@ def get_settings() -> Settings:
         embedding_model=os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2"),
         retrieval_overfetch=_int(os.getenv("RETRIEVAL_OVERFETCH"), 2),
         relevance_floor=_float(os.getenv("RELEVANCE_FLOOR"), 0.2),
-        high_grounding_threshold=_float(os.getenv("HIGH_GROUNDING_THRESHOLD"), 0.85),
+        high_grounding_threshold=_float(os.getenv("HIGH_GROUNDING_THRESHOLD"), 0.7),
         medium_grounding_threshold=_float(os.getenv("MEDIUM_GROUNDING_THRESHOLD"), 0.4),
         low_grounding_warn_threshold=_float(os.getenv("LOW_GROUNDING_WARN_THRESHOLD"), 0.5),
     )
