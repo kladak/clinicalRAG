@@ -11,6 +11,9 @@ services:
       CHROMA_PATH: /data/chroma_db
       AUDIT_DB_PATH: /data/audit.db
       MOCK_LLM: ${MOCK_LLM:-0}
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      HF_HOME: /root/.cache/huggingface
       LOG_JSON: "1"
       RATE_LIMIT_PER_MINUTE: "60"
       CORS_ORIGINS: "*"

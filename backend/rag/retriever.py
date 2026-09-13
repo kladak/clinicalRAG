@@ -30,7 +30,13 @@ def reset_client() -> None:
 def get_encoder():
     global _encoder
     if _encoder is None:
-        _encoder = SentenceTransformer(get_settings().embedding_model)
+        model_name = get_settings().embedding_model
+        try:
+            # Prefer local cache (Docker bake / prior download) so demos do not
+            # hard-require outbound Hugging Face at process start.
+            _encoder = SentenceTransformer(model_name, local_files_only=True)
+        except Exception:
+            _encoder = SentenceTransformer(model_name)
     return _encoder
 
 
