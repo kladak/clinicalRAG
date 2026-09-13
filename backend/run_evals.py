@@ -95,8 +95,15 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="ClinicalRAG eval harness")
     parser.add_argument(
         "--mock",
+        "--offline",
+        dest="mock",
         action="store_true",
         help="Force MOCK_LLM=1 (extractive answers, no Groq calls)",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON summary to stdout",
     )
     parser.add_argument(
         "--cases",
@@ -137,8 +144,21 @@ def main(argv: list[str] | None = None) -> int:
         print(f"      answer: {result['answer_preview']}")
 
     passed = sum(1 for result in results if result["passed"])
-    print("")
-    print(f"{passed}/{len(results)} cases passed")
+    if args.json:
+        print(
+            json.dumps(
+                {
+                    "passed": passed,
+                    "total": len(results),
+                    "mock_llm": settings.mock_llm,
+                    "results": results,
+                },
+                indent=2,
+            )
+        )
+    else:
+        print("")
+        print(f"{passed}/{len(results)} cases passed")
     return 0 if passed == len(results) else 1
 
 
