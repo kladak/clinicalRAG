@@ -1,4 +1,4 @@
-"""API tests that avoid loading sentence-transformers / Chroma when possible."""
+"""API contract tests with mocked pipeline entrypoints."""
 
 from __future__ import annotations
 
@@ -7,8 +7,23 @@ import types
 
 import pytest
 
-# Lightweight stubs so importing the FastAPI app does not require LangChain/Chroma.
-if "langchain_core" not in sys.modules:
+try:
+    from fastapi.testclient import TestClient
+except ImportError:  # pragma: no cover
+    pytest.skip("fastapi not installed", allow_module_level=True)
+
+
+def _ensure_pkg(name: str) -> bool:
+    try:
+        __import__(name)
+        return True
+    except ImportError:
+        return False
+
+
+# Only inject stubs when the real packages are missing (lean CI).
+# When full requirements are installed, never shadow real langchain_core.
+if not _ensure_pkg("langchain_core"):
     lc = types.ModuleType("langchain_core")
     messages = types.ModuleType("langchain_core.messages")
 
@@ -22,7 +37,7 @@ if "langchain_core" not in sys.modules:
     sys.modules["langchain_core"] = lc
     sys.modules["langchain_core.messages"] = messages
 
-if "langgraph" not in sys.modules:
+if not _ensure_pkg("langgraph"):
     lg = types.ModuleType("langgraph")
     graph = types.ModuleType("langgraph.graph")
 
@@ -50,19 +65,12 @@ if "langgraph" not in sys.modules:
     sys.modules["langgraph"] = lg
     sys.modules["langgraph.graph"] = graph
 
-try:
-    from fastapi.testclient import TestClient
-except ImportError:  # pragma: no cover
-    pytest.skip("fastapi not installed", allow_module_level=True)
-
-
-# These contract tests need the app import graph; skip cleanly when heavy deps are absent.
 for _mod in ("chromadb", "sentence_transformers"):
-    try:
-        __import__(_mod)
-    except ImportError:
-        pytest.skip(f"{_mod} not installed — API contract tests need full backend deps or richer stubs", allow_module_level=True)
-
+    if not _ensure_pkg(_mod):
+        pytest.skip(
+            f"{_mod} not installed — API contract tests need full backend deps",
+            allow_module_level=True,
+        )
 
 
 @pytest.fixture()
