@@ -188,10 +188,10 @@ def retrieve_node(state: RAGState) -> RAGState:
         return state
 
     settings = get_settings()
-    # NOTE: merge window starts intentionally wide — we tighten after seeing
-    # citation order noise on compound queries (see follow-up commit).
-    merge_limit = max(state["max_sources"] * 4, 12)
+    # Tightened after compound queries flooded the source list with weak neighbors.
+    # Keep a small overfetch for multi-query merge, then hard-cap to max_sources*2.
     overfetch = settings.retrieval_overfetch
+    merge_limit = min(max(state["max_sources"] * 2, state["max_sources"] + overfetch), 8)
 
     decomposed = decompose_query(state["query"])
     queries = decomposed.retrieval_queries[:3] or [state["query"]]
