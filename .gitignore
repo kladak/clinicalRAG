@@ -13,10 +13,15 @@ backend/venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
 
 # Runtime storage
 audit.db
 chroma_db/
+backend/audit.db
+backend/chroma_db/
 
 # Accidental nested project copy
 /clinicalrag/
@@ -25,6 +30,8 @@ chroma_db/
 node_modules/
 dist/
 
-# Logs
+# Logs / coverage
 *.log
 *.zip
+.coverage
+htmlcov/
