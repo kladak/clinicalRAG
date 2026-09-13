@@ -1,8 +1,7 @@
-"""Refusal and hallucination guards for educational clinical CDS.
+"""Lexical off-topic and unsupported-dosage heuristics for educational CDS.
 
-These are heuristic checks — not a substitute for clinical validation.
-They exist so the demo refuses off-topic prompts and flags answers that
-introduce unsupported drug/dose claims relative to retrieved sources.
+These are narrow regex/allowlist checks — not a general hallucination model
+and not a substitute for clinical validation.
 """
 
 from __future__ import annotations
@@ -47,10 +46,6 @@ CLINICAL_INTENT_HINTS = {
 DOSAGE_CLAIM = re.compile(
     r"\b\d+(?:\.\d+)?\s*(?:mg|mcg|µg|g|ml|mL|units?|IU)\b",
     re.IGNORECASE,
-)
-
-DRUG_LIKE = re.compile(
-    r"\b(?:[A-Z][a-z]+(?:mycin|cillin|olol|pril|sartan|xaban|flozin|parin|vir|nib|mab))\b"
 )
 
 

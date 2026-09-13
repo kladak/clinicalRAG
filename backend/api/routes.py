@@ -127,6 +127,11 @@ async def query_endpoint(request: QueryRequest, raw: Request):
 
 @router.post("/ingest", response_model=IngestResponse)
 async def ingest_endpoint(request: IngestRequest):
+    if not get_settings().enable_ingest:
+        raise HTTPException(
+            status_code=403,
+            detail="Ingest disabled. Set ENABLE_INGEST=1 for local demo corpus writes.",
+        )
     try:
         result = ingest_document(
             title=request.title,

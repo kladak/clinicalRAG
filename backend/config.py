@@ -40,6 +40,7 @@ class Settings:
     rate_limit_per_minute: int
     cors_origins: tuple[str, ...]
     mock_llm: bool
+    enable_ingest: bool
     log_json: bool
     log_level: str
     app_version: str
@@ -80,6 +81,7 @@ def get_settings() -> Settings:
         rate_limit_per_minute=_int(os.getenv("RATE_LIMIT_PER_MINUTE"), 30),
         cors_origins=origin_tuple,
         mock_llm=mock,
+        enable_ingest=_bool(os.getenv("ENABLE_INGEST"), default=True),
         log_json=_bool(os.getenv("LOG_JSON"), default=True),
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
         app_version=os.getenv("APP_VERSION", "1.1.0"),

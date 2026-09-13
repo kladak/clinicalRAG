@@ -216,7 +216,7 @@ Same shapes as before — see `/api/v1/ingest` and `/api/v1/audit`. Raw queries 
 - Clearly off-topic (trivia, weather, jokes).
 - No relevant guideline chunks after retrieval + grading.
 - Post-generation checks find dosage claims absent from retrieved sources.
-- Grounding score too low to present as guideline-supported.
+- (Low grounding does **not** hard-refuse today — it returns the answer with `confidence=low` and a warning. Off-topic / empty evidence / unsupported dosage do refuse.)
 
 Refusal is a product feature. A confident wrong answer is worse than "I cannot find this in the available guidelines."
 
@@ -242,7 +242,7 @@ Do not quote these as clinical performance metrics.
 
 ## Limitations
 
-- `/api/v1/ingest` and `/api/v1/audit` are **unauthenticated** demo endpoints. Fine for localhost; do not expose a public deploy without gating or disabling ingest. Compose defaults `CORS_ORIGINS=*`.
+- `/api/v1/ingest` and `/api/v1/audit` are **unauthenticated** demo endpoints. Fine for localhost; do not expose a public deploy without gating or disabling ingest (`ENABLE_INGEST=0`). Compose defaults `CORS_ORIGINS=*`.
 
 - Not a medical device; not for real patient care.
 - Seed corpus is intentionally small.

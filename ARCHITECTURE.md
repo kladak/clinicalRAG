@@ -49,7 +49,7 @@ These are engineering signals for demos and regression tests — **not** clinica
 - Structured JSON logging without raw query text; `X-Request-Id` on responses.
 - Typed request/response models including `refusal_reason` and `citations`.
 - In-process fixed-window rate limit on `/query` (single-instance demo).
-- `/health` liveness vs `/api/v1/ready` readiness (audit DB + vector store listable).
+- `/health` should be process liveness (no Chroma). `/api/v1/ready` is readiness (audit DB + vector store). Root `/ready` is removed/aliased to real readiness.
 
 ## Query-hash audit (not HIPAA certification)
 
