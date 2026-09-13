@@ -59,8 +59,11 @@ def evaluate_case(case: dict) -> dict:
         refusal_text = "cannot find" in answer.lower() or not answer.strip()
         no_sources = len(sources) == 0
         low_grounding = grounding_score <= case.get("max_grounding", 0.1)
-        checks.extend([refusal_text, no_sources, low_grounding])
+        expected_code = case.get("expected_refusal_reason", "off_topic")
+        reason_ok = refusal_reason == expected_code
+        checks.extend([refusal_text, no_sources, low_grounding, reason_ok])
         details["refusal_reason"] = refusal_reason
+        details["refusal_reason_ok"] = reason_ok
     else:
         titles = " | ".join(_source_titles(sources)).lower()
         source_ok = case["expected_source"].lower() in titles
@@ -71,9 +74,7 @@ def evaluate_case(case: dict) -> dict:
         details["terms_ok"] = terms_ok
         details["grounding_ok"] = grounding_ok
         if case.get("expect_compound"):
-            compound_ok = bool(state.get("subqueries")) or len(
-                state.get("clinical_terms") or []
-            ) >= 2
+            compound_ok = len(state.get("subqueries") or []) >= 2
             checks.append(compound_ok)
             details["compound_ok"] = compound_ok
 

@@ -193,8 +193,13 @@ def retrieve_node(state: RAGState) -> RAGState:
     overfetch = settings.retrieval_overfetch
     merge_limit = min(max(state["max_sources"] * 2, state["max_sources"] + overfetch), 8)
 
-    decomposed = decompose_query(state["query"])
-    queries = decomposed.retrieval_queries[:3] or [state["query"]]
+    # Prefer decompose_node outputs; fall back only if a caller skipped that node.
+    subqueries = state.get("subqueries") or []
+    if subqueries:
+        queries = list(subqueries)[:3]
+    else:
+        decomposed = decompose_query(state["query"])
+        queries = decomposed.retrieval_queries[:3] or [state["query"]]
 
     merged: dict[str, dict] = {}
     for q in queries:

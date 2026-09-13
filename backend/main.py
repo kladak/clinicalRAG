@@ -15,7 +15,6 @@ from config import get_settings
 from data.seed_data import seed_if_empty
 from logging_config import configure_logging
 from rag.pipeline import GENERATION_MODEL, GRADING_MODEL, LLM_PROVIDER, groq_configured
-from rag.retriever import collection_stats
 
 settings = get_settings()
 configure_logging(level=settings.log_level, json_logs=settings.log_json)
@@ -77,11 +76,11 @@ app.include_router(router, prefix="/api/v1")
 
 @app.get("/health")
 async def health():
+    """Process liveness only — do not touch Chroma/SQLite here."""
     current = get_settings()
     return {
         "status": "ok",
         "version": current.app_version,
-        "collections": collection_stats(),
         "llm_provider": LLM_PROVIDER,
         "llm_configured": groq_configured(),
         "mock_llm": current.mock_llm,
@@ -92,5 +91,7 @@ async def health():
 
 @app.get("/ready")
 async def ready():
-    """Liveness companion at root; detailed checks live under /api/v1/ready."""
-    return {"status": "ready", "version": get_settings().app_version}
+    """Alias to the real readiness checks under /api/v1/ready."""
+    from api.routes import readiness_endpoint
+
+    return await readiness_endpoint()

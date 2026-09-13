@@ -3,56 +3,84 @@
     "name": "HFrEF first-line therapy",
     "query": "What are first-line treatments for HFrEF?",
     "expected_source": "Heart Failure",
-    "expected_terms": ["sacubitril", "beta", "sglt2"],
+    "expected_terms": [
+      "sacubitril",
+      "beta",
+      "sglt2"
+    ],
     "min_grounding": 0.55
   },
   {
     "name": "SGLT2 heart failure",
     "query": "What SGLT2 inhibitors are recommended for heart failure?",
     "expected_source": "Heart Failure",
-    "expected_terms": ["dapagliflozin", "empagliflozin"],
+    "expected_terms": [
+      "dapagliflozin",
+      "empagliflozin"
+    ],
     "min_grounding": 0.6
   },
   {
     "name": "Sepsis criteria",
     "query": "What are the diagnostic criteria for sepsis?",
     "expected_source": "Sepsis",
-    "expected_terms": ["infection", "organ", "sofa"],
+    "expected_terms": [
+      "infection",
+      "organ",
+      "sofa"
+    ],
     "min_grounding": 0.55
   },
   {
     "name": "AF stroke risk",
     "query": "How should atrial fibrillation stroke risk be assessed?",
     "expected_source": "Atrial Fibrillation",
-    "expected_terms": ["cha2ds2", "vasc", "anticoagulation"],
+    "expected_terms": [
+      "cha2ds2",
+      "vasc",
+      "anticoagulation"
+    ],
     "min_grounding": 0.55
   },
   {
     "name": "WHO anticoagulants",
     "query": "What anticoagulants are on the WHO Essential Medicines List?",
     "expected_source": "Anticoagulants",
-    "expected_terms": ["enoxaparin", "heparin", "warfarin"],
+    "expected_terms": [
+      "enoxaparin",
+      "heparin",
+      "warfarin"
+    ],
     "min_grounding": 0.55
   },
   {
     "name": "COVID outpatient antiviral",
     "query": "What is preferred first-line antiviral therapy for high-risk outpatient COVID-19?",
     "expected_source": "COVID",
-    "expected_terms": ["nirmatrelvir", "ritonavir"],
+    "expected_terms": [
+      "nirmatrelvir",
+      "ritonavir"
+    ],
     "min_grounding": 0.5
   },
   {
     "name": "Septic shock vasopressor",
     "query": "What is first-line vasopressor therapy for septic shock?",
     "expected_source": "Sepsis",
-    "expected_terms": ["norepinephrine", "map"],
+    "expected_terms": [
+      "norepinephrine",
+      "map"
+    ],
     "min_grounding": 0.5
   },
   {
     "name": "Compound HFrEF and SGLT2",
     "query": "What are first-line treatments for HFrEF and which SGLT2 inhibitors are recommended?",
     "expected_source": "Heart Failure",
-    "expected_terms": ["sglt2", "dapagliflozin"],
+    "expected_terms": [
+      "sglt2",
+      "dapagliflozin"
+    ],
     "min_grounding": 0.5,
     "expect_compound": true
   },
@@ -60,12 +88,14 @@
     "name": "Off-topic refusal",
     "query": "What is the capital of France?",
     "expect_refusal": true,
-    "max_grounding": 0.1
+    "max_grounding": 0.1,
+    "expected_refusal_reason": "off_topic"
   },
   {
     "name": "Weather refusal",
     "query": "What is the weather in Toronto tomorrow?",
     "expect_refusal": true,
-    "max_grounding": 0.1
+    "max_grounding": 0.1,
+    "expected_refusal_reason": "off_topic"
   }
 ]
