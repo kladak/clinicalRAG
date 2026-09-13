@@ -35,3 +35,8 @@ dist/
 *.zip
 .coverage
 htmlcov/
+
+# local eval / smoke artifacts
+backend/chroma_db*/
+backend/audit*.db
+**/chroma.sqlite3
