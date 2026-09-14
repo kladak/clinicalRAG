@@ -9,9 +9,10 @@ Grounded clinical Q&A over a local guideline corpus — citations, grounding che
 ## Try the demo
 
 <!-- DEMO_URL -->
-**Frontend (Vercel):** [https://clinicalrag-three.vercel.app](https://clinicalrag-three.vercel.app)
+**Live demo:** [https://clinicalrag-demo.vercel.app](https://clinicalrag-demo.vercel.app)
 
-_UI is live. **API URL pending** — backend not deployed yet (Railway CLI auth required; code still waiting on deploy box). Until `VITE_API_URL` points at a live mock API (`MOCK_LLM=1`, `ENABLE_INGEST=0`), queries will not reach a public backend. Hosting: [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)._
+Frontend on Vercel. Mock API (`MOCK_LLM=1`, `ENABLE_INGEST=0`) currently via Cloudflare quick tunnel → box Docker (`https://rebates-actor-included-taxation.trycloudflare.com`). **Railway/Render auth still pending** for a durable backend URL — after that, reset `VITE_API_URL` and redeploy. Details: [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md).
+
 
 ## Run locally
 
@@ -282,6 +283,7 @@ Do not quote these as clinical performance metrics.
 
 <!-- DEMO_URL -->
 
-- Frontend (Vercel): https://clinicalrag-three.vercel.app — **API pending** (set `VITE_API_URL` after Railway/Render).
+- Frontend (Vercel): https://clinicalrag-demo.vercel.app
+- API (interim tunnel): https://rebates-actor-included-taxation.trycloudflare.com/health (`mock_llm: true`) — replace with Railway/Render when CLI auth completes.
 - Backend health (Railway): `https://YOUR-BACKEND/health` — expect `"mock_llm": true` on the public mock deploy.
 - Hosting checklist: [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)
