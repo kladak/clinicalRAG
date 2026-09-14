@@ -23,6 +23,12 @@ Local/dev defaults remain permissive (`ENABLE_INGEST` defaults to on; `MOCK_LLM`
 
 ---
 
+## Render (backend alternative)
+
+If Railway CLI auth is unavailable, use the Blueprint at [`backend/render.yaml`](../backend/render.yaml) (Docker runtime, disk at `/data`, `MOCK_LLM=1`, `ENABLE_INGEST=0`). After the service is live, set `CORS_ORIGINS` to the Vercel origin and point `VITE_API_URL` at the Render HTTPS URL (no trailing slash).
+
+---
+
 ## Railway (backend)
 
 1. New project → deploy from GitHub → **Root Directory:** `backend`

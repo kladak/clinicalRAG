@@ -1,0 +1,31 @@
+# Render Blueprint alternative when Railway CLI auth is unavailable.
+# Public mock recruiter demo — see docs/DEMO_HOSTING.md
+services:
+  - type: web
+    name: clinicalrag-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: MOCK_LLM
+        value: "1"
+      - key: ENABLE_INGEST
+        value: "0"
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: CHROMA_PATH
+        value: /data/chroma_db
+      - key: AUDIT_DB_PATH
+        value: /data/audit.db
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "30"
+      - key: LOG_JSON
+        value: "1"
+      - key: LOG_LEVEL
+        value: INFO
+    disk:
+      name: clinicalrag-data
+      mountPath: /data
+      sizeGB: 1

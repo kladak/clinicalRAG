@@ -10,7 +10,7 @@ Grounded clinical Q&A over a local guideline corpus — citations, grounding che
 
 <!-- DEMO_URL -->
 
-_Live recruiter demo URL pending. When hosted, replace the placeholder above with the Vercel frontend link (mock path: `MOCK_LLM=1`, no Groq key). Hosting steps: [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)._
+_Live recruiter demo URL pending — **blocked on Vercel CLI + Railway/Render auth** on the deploy box (Vercel MCP `list_teams` empty; CLI logged out; no tokens in env). After login: backend with `MOCK_LLM=1` `ENABLE_INGEST=0` (`backend/Dockerfile` + `backend/railway.toml`, or `backend/render.yaml`), set frontend `VITE_API_URL` to the API origin, then replace this placeholder with the Vercel URL. Steps: [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)._
 
 ## Run locally
 
