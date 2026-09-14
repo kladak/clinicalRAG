@@ -9,8 +9,9 @@ Grounded clinical Q&A over a local guideline corpus — citations, grounding che
 ## Try the demo
 
 <!-- DEMO_URL -->
+**Frontend (Vercel):** [https://clinicalrag-three.vercel.app](https://clinicalrag-three.vercel.app)
 
-_Live recruiter demo URL pending — **blocked on Vercel CLI + Railway/Render auth** on the deploy box (Vercel MCP `list_teams` empty; CLI logged out; no tokens in env). After login: backend with `MOCK_LLM=1` `ENABLE_INGEST=0` (`backend/Dockerfile` + `backend/railway.toml`, or `backend/render.yaml`), set frontend `VITE_API_URL` to the API origin, then replace this placeholder with the Vercel URL. Steps: [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)._
+_UI is live. **API URL pending** — backend not deployed yet (Railway CLI auth required; code still waiting on deploy box). Until `VITE_API_URL` points at a live mock API (`MOCK_LLM=1`, `ENABLE_INGEST=0`), queries will not reach a public backend. Hosting: [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)._
 
 ## Run locally
 
@@ -281,6 +282,6 @@ Do not quote these as clinical performance metrics.
 
 <!-- DEMO_URL -->
 
-- Frontend (Vercel): pending — fill `<!-- DEMO_URL -->` above and in **Try the demo** when live.
+- Frontend (Vercel): https://clinicalrag-three.vercel.app — **API pending** (set `VITE_API_URL` after Railway/Render).
 - Backend health (Railway): `https://YOUR-BACKEND/health` — expect `"mock_llm": true` on the public mock deploy.
 - Hosting checklist: [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)
