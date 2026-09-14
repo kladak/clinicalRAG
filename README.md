@@ -2,7 +2,7 @@
 
 Grounded clinical decision support API and physician-facing web console for answering guideline questions from a local clinical document collection.
 
-ClinicalRAG is a portfolio project for Karim Ladak ([github.com/kladak](https://github.com/kladak)). It shows practical Applied AI engineering: query decomposition, retrieval, source-grounded generation, overlap-based citation attribution, off-topic/dosage refusal checks, evaluation, hashed audit logging, and a deployable demo skeleton. **Educational / research CDS only — not a medical device, not for real patient care.**
+ClinicalRAG implements query decomposition, retrieval, source-grounded generation, overlap-based citation attribution, off-topic/dosage refusal checks, evaluation, hashed audit logging, and a deployable demo skeleton. **Educational / research CDS only — not a medical device, not for real patient care.**
 
 ## Screenshot
 
@@ -247,7 +247,7 @@ Do not quote these as clinical performance metrics.
 - Not a medical device; not for real patient care.
 - Seed corpus is intentionally small.
 - In-process rate limiting is demo-grade; multi-replica needs shared limits.
-- Chroma local persistence is fine for a portfolio deploy; production needs shared vector storage.
+- Chroma local persistence is suitable for a local/demo deploy; shared vector storage is required for multi-instance production.
 - SQLite audit → PostgreSQL in production.
 - Real HIPAA deployments need BAAs, encryption, access control, monitoring, incident response, and formal clinical validation.
 
