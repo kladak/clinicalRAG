@@ -1,12 +1,37 @@
 # ClinicalRAG
 
-Grounded clinical decision support API and physician-facing web console for answering guideline questions from a local clinical document collection.
-
-ClinicalRAG implements query decomposition, retrieval, source-grounded generation, overlap-based citation attribution, off-topic/dosage refusal checks, evaluation, hashed audit logging, and a deployable demo skeleton. **Educational / research CDS only — not a medical device, not for real patient care.**
-
-## Screenshot
-
 ![ClinicalRAG — Guideline Query Console](docs/screenshot.png)
+
+Grounded clinical Q&A over a local guideline corpus — citations, grounding checks, and refusals when evidence is missing.
+
+**Educational / research CDS only — not a medical device, not for real patient care.**
+
+## Try the demo
+
+<!-- DEMO_URL -->
+
+_Live recruiter demo URL pending. When hosted, replace the placeholder above with the Vercel frontend link (mock path: `MOCK_LLM=1`, no Groq key). Hosting steps: [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)._
+
+## Run locally
+
+```bash
+# Backend (mock LLM — no GROQ_API_KEY required)
+cd backend
+python3.11 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp -n .env.example .env
+# set MOCK_LLM=1 in .env (optional: ENABLE_INGEST=1 for local corpus writes)
+MOCK_LLM=1 uvicorn main:app --reload
+```
+
+```bash
+# Frontend (separate terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. Or: `MOCK_LLM=1 docker compose up --build` → API `:8000`, UI `:5173`.
 
 ## Why This Exists
 
@@ -89,7 +114,9 @@ docker-compose.yml  backend + frontend local bring-up
 ARCHITECTURE.md     design notes
 ```
 
-## Local Setup
+## Local Setup (detail)
+
+Quick start is under **Run locally** above. Full options:
 
 ### Backend
 
@@ -222,10 +249,9 @@ Refusal is a product feature. A confident wrong answer is worse than "I cannot f
 
 ## Deployment
 
-**Railway (backend):** deploy `backend/`, set `GROQ_API_KEY`, `CHROMA_PATH=/data/chroma_db`, `AUDIT_DB_PATH=/data/audit.db`, mount volume at `/data`.
+Public **mock recruiter** demo (recommended for portfolio): **no Groq key** — see **[docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)** for exact Railway + Vercel env vars (`MOCK_LLM=1`, `ENABLE_INGEST=0`, `CORS_ORIGINS`, `VITE_API_URL`).
 
-**Vercel (frontend):** deploy `frontend/`, set `VITE_API_URL` to the Railway URL.
-
+Live Groq path (optional): Railway `backend/` with `MOCK_LLM=0` + `GROQ_API_KEY`, volume at `/data` (`CHROMA_PATH=/data/chroma_db`, `AUDIT_DB_PATH=/data/audit.db`); Vercel `frontend/` with `VITE_API_URL` pointing at Railway.
 
 ## Verification (2026-09-13)
 
@@ -242,7 +268,7 @@ Do not quote these as clinical performance metrics.
 
 ## Limitations
 
-- `/api/v1/ingest` and `/api/v1/audit` are **unauthenticated** demo endpoints. Fine for localhost; do not expose a public deploy without gating or disabling ingest (`ENABLE_INGEST=0`). Compose defaults `CORS_ORIGINS=*`.
+- `/api/v1/ingest` and `/api/v1/audit` are **unauthenticated** demo endpoints. Fine for localhost; public mock deploys must set `ENABLE_INGEST=0` and prefer a locked `CORS_ORIGINS` (see [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)). Compose defaults `CORS_ORIGINS=*`.
 
 - Not a medical device; not for real patient care.
 - Seed corpus is intentionally small.
@@ -253,5 +279,8 @@ Do not quote these as clinical performance metrics.
 
 ## Live Demo Links
 
-- Backend health: add Railway URL after deployment.
-- Frontend: add Vercel URL after deployment.
+<!-- DEMO_URL -->
+
+- Frontend (Vercel): pending — fill `<!-- DEMO_URL -->` above and in **Try the demo** when live.
+- Backend health (Railway): `https://YOUR-BACKEND/health` — expect `"mock_llm": true` on the public mock deploy.
+- Hosting checklist: [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)
