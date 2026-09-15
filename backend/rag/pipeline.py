@@ -543,7 +543,7 @@ def get_pipeline():
 
 
 def reset_pipeline() -> None:
-    """Test helper — drop compiled graph after settings changes."""
+    """Test helper: drop the compiled graph after settings changes."""
     global _pipeline, _grader, _generator
     _pipeline = None
     _grader = None

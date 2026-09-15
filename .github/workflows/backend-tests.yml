@@ -24,7 +24,7 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
       # Unit suite covers guards/decompose/grounding/citations without loading
-      # sentence-transformers or spinning Chroma — keep CI lean.
+      # sentence-transformers or spinning up Chroma, which keeps CI lean.
       - name: Install lightweight test deps
         run: |
           python -m pip install --upgrade pip

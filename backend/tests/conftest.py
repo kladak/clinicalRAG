@@ -47,7 +47,7 @@ def tmp_paths(monkeypatch, tmp_path):
     except Exception:
         pass
 
-    import audit.logger as audit_logger  # noqa: F401 — path via settings
+    import audit.logger as audit_logger  # noqa: F401 (path comes from settings)
 
     return {"chroma": chroma, "audit": audit}
 

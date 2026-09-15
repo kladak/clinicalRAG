@@ -35,8 +35,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="ClinicalRAG API",
     description=(
-        "Educational grounded clinical decision support — responses strictly from "
-        "ingested guidelines. NOT a medical device."
+        "Grounded clinical question answering. Responses come strictly from "
+        "the ingested guideline corpus."
     ),
     version=settings.app_version,
     lifespan=lifespan,
@@ -76,7 +76,7 @@ app.include_router(router, prefix="/api/v1")
 
 @app.get("/health")
 async def health():
-    """Process liveness only — do not touch Chroma/SQLite here."""
+    """Process liveness only; do not touch Chroma or SQLite here."""
     current = get_settings()
     return {
         "status": "ok",

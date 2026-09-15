@@ -178,7 +178,7 @@ async def readiness_endpoint():
         init_audit_db()
         get_recent_audit(1)
         checks["audit_db"] = "ok"
-    except Exception as exc:  # noqa: BLE001 — surface check failure
+    except Exception as exc:  # noqa: BLE001 (surfaced as a failed readiness check)
         checks["audit_db"] = f"error: {exc}"
         ready = False
 

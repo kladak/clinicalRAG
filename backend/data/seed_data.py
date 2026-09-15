@@ -1,3 +1,9 @@
+"""Seed corpus for retrieval testing.
+
+Entries are summaries written for this repository, not verbatim guideline text.
+``source_url`` on each entry points at the publication being summarized.
+"""
+
 from rag.ingestion import ingest_document
 from rag.retriever import get_or_create_collection
 

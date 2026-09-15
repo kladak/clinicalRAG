@@ -1,8 +1,8 @@
 """Structured logging setup.
 
 JSON lines in production-ish mode; readable text when LOG_JSON=false.
-We intentionally do not log raw query text — only hashed identifiers and
-coarse metadata — to stay consistent with the audit minimization story.
+Raw query text is never logged. Only hashed identifiers and coarse metadata
+are emitted, matching what the audit store keeps.
 """
 
 from __future__ import annotations

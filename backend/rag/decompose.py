@@ -11,7 +11,7 @@ import re
 from dataclasses import dataclass, field
 
 
-# Lightweight clinical lexicon — not exhaustive; tuned to the seed corpus.
+# Lightweight clinical lexicon, tuned to the seed corpus rather than exhaustive.
 CLINICAL_TERMS = {
     "hfref",
     "hfpef",
@@ -73,7 +73,7 @@ class DecomposedQuery:
 
     @property
     def retrieval_queries(self) -> list[str]:
-        """Queries to embed/search — original first, then focused variants."""
+        """Queries to embed and search: original first, then focused variants."""
         seen: set[str] = set()
         ordered: list[str] = []
         for q in [self.original, *self.subqueries]:

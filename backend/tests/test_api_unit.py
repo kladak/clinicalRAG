@@ -68,7 +68,7 @@ if not _ensure_pkg("langgraph"):
 for _mod in ("chromadb", "sentence_transformers"):
     if not _ensure_pkg(_mod):
         pytest.skip(
-            f"{_mod} not installed — API contract tests need full backend deps",
+            f"{_mod} not installed; API contract tests need the full backend deps",
             allow_module_level=True,
         )
 

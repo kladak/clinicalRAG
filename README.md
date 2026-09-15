@@ -1,47 +1,19 @@
 # ClinicalRAG
 
-![ClinicalRAG — Guideline Query Console](docs/screenshot.png)
+![ClinicalRAG guideline query console](docs/screenshot.png)
 
-Grounded clinical Q&A over a local guideline corpus — citations, grounding checks, and refusals when evidence is missing.
+Citation-grounded RAG for clinical guideline retrieval and question answering.
 
-**Educational / research CDS only — not a medical device, not for real patient care.**
+## What it does
 
-## Try the demo
+Generation is constrained to the ingested guideline text. Every answer sentence is mapped
+back to the source chunk it came from, a grounding score is computed over the whole answer,
+off-topic questions and dosage claims absent from the retrieved sources are refused, and
+the audit trail stores a hash of each query.
 
-<!-- DEMO_URL -->
-**Live demo:** [https://clinicalrag-demo.vercel.app](https://clinicalrag-demo.vercel.app)
+Run it locally in a few minutes, with or without an LLM API key.
 
-Frontend on Vercel. Mock API (`MOCK_LLM=1`, `ENABLE_INGEST=0`) currently via Cloudflare quick tunnel → box Docker (`https://rebates-actor-included-taxation.trycloudflare.com`). **Railway/Render auth still pending** for a durable backend URL — after that, reset `VITE_API_URL` and redeploy. Details: [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md).
-
-
-## Run locally
-
-```bash
-# Backend (mock LLM — no GROQ_API_KEY required)
-cd backend
-python3.11 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp -n .env.example .env
-# set MOCK_LLM=1 in .env (optional: ENABLE_INGEST=1 for local corpus writes)
-MOCK_LLM=1 uvicorn main:app --reload
-```
-
-```bash
-# Frontend (separate terminal)
-cd frontend
-npm install
-npm run dev
-```
-
-Open `http://localhost:5173`. Or: `MOCK_LLM=1 docker compose up --build` → API `:8000`, UI `:5173`.
-
-## Why This Exists
-
-Clinical LLM demos often fail where it matters: they sound confident without showing where an answer came from. ClinicalRAG keeps the model constrained to ingested guideline text, returns source citations (including per-sentence attribution), computes a grounding score, refuses off-topic or ungrounded dosage claims, and records an audit trail without storing raw physician queries.
-
-The UI stays restrained and operational rather than flashy. The interesting work is in the graph.
-
-## Architecture (as implemented)
+## Architecture
 
 ```text
 React physician console
@@ -53,7 +25,7 @@ FastAPI /api/v1/query  (+ rate limit, request IDs, typed models)
 LangGraph StateGraph
         |
         +--> guard_query
-        |       off-topic / non-clinical refusal
+        |       off-topic / non-clinical refusal, before any embedding work
         |
         +--> decompose
         |       compound split + clinical term lexicon (no LLM)
@@ -63,10 +35,10 @@ LangGraph StateGraph
         |       deterministic rerank + merge cap
         |
         +--> grade_relevance
-        |       Groq llama-3.1-8b-instant  |  MOCK_LLM → score floor
+        |       Groq llama-3.1-8b-instant  |  MOCK_LLM -> score floor
         |
-        +--> generate  (or skip on refusal / empty evidence)
-        |       Groq llama-3.3-70b-versatile  |  MOCK_LLM → extractive
+        +--> generate  (skipped on refusal / empty evidence)
+        |       Groq llama-3.3-70b-versatile  |  MOCK_LLM -> extractive
         |
         +--> evaluate_grounding
         |       sentence attribution + unsupported-dosage check
@@ -75,215 +47,135 @@ LangGraph StateGraph
 Answer + citations + refusal_reason + hashed audit log
 ```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for design rationale and production tradeoffs.
+[ARCHITECTURE.md](ARCHITECTURE.md) covers the design rationale, the MOCK_LLM path, the
+audit model, and production scaling tradeoffs.
 
-## Key Features
+## Implementation notes
 
-- LangGraph pipeline: guard → decompose → retrieve → grade → generate → grounding/citations.
-- Deterministic query decomposition for compound clinical questions (offline-friendly).
-- Local embeddings (`all-MiniLM-L6-v2`) + ChromaDB persistence.
-- Groq generation/grading with a first-class `MOCK_LLM` extractive path for CI.
-- Per-sentence source attribution (content-token overlap) plus a separate hybrid grounding score.
-- Heuristic refusal for off-topic prompts and unsupported dosage strings (not a general faithfulness model).
-- Query-hash audit logging (no raw query storage) — privacy-minimizing, not a HIPAA compliance claim.
-- FastAPI hardening: Pydantic models, readiness probe, structured logs, in-process rate limit.
-- Eval harness + unit/API tests runnable without API keys.
-- `docker-compose` local bring-up; GitHub Actions runs the lean offline unit suite (evals/compose verified locally).
+- LangGraph `StateGraph` with conditional edges that skip generation when the guard fires
+  or no relevant documents survive grading.
+- Deterministic query decomposition for compound clinical questions. No LLM call, so the
+  offline path behaves identically to the live one.
+- Per-sentence source attribution by content-token overlap (`rag/citations.py`), reported
+  separately from the hybrid grounding score (`rag/evaluator.py`).
+- Refusal is a first-class outcome with its own `refusal_reason`. Off-topic prompts, empty
+  evidence, and post-generation dosage claims absent from the retrieved sources all refuse.
+  Low grounding returns the answer with `confidence=low` and a warning.
+- `MOCK_LLM=1` swaps generation for extractive sentence selection and grading for a score
+  floor, so tests and evals run without an API key.
+- Audit logging hashes the query before storage (`audit/logger.py`), so the audit table
+  never holds query text.
 
-## Stack
+## Corpus
 
-- Backend: Python 3.11, FastAPI, LangGraph, LangChain Groq, ChromaDB, sentence-transformers, SQLite
-- Frontend: React 18, Vite, Tailwind CSS v3, Axios
-- LLM provider: Groq (optional when `MOCK_LLM=1`)
-- Deployment: Railway backend, Vercel frontend; local via Docker Compose
+`backend/data/seed_data.py` holds a small seed corpus used to exercise retrieval. The
+entries are summaries written for this repository. `source_url` on each entry points at
+the publication being summarized.
 
-## Repository Layout
+## Run locally
+
+```bash
+# Backend (mock LLM, no GROQ_API_KEY required)
+cd backend
+python3.11 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp -n .env.example .env          # set MOCK_LLM=1
+MOCK_LLM=1 uvicorn main:app --reload
+```
+
+```bash
+# Frontend (separate terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. First backend start seeds the `clinical_guidelines`
+collection if it is empty.
+
+Docker equivalent:
+
+```bash
+MOCK_LLM=1 docker compose up --build   # API :8000, UI :5173
+```
+
+For the live path, set `MOCK_LLM=0` and `GROQ_API_KEY` in
+`backend/.env`. Other knobs (`CHROMA_PATH`, `AUDIT_DB_PATH`, `RATE_LIMIT_PER_MINUTE`,
+`CORS_ORIGINS`, `ENABLE_INGEST`) are documented in `backend/.env.example` and read through
+`backend/config.py`.
+
+## Tests and evaluation
+
+```bash
+cd backend && source .venv/bin/activate
+
+# Pure-logic suite, no embedding download
+pytest -q tests/test_config.py tests/test_guards.py tests/test_decompose.py \
+  tests/test_evaluator.py tests/test_citations.py tests/test_rate_limit.py
+
+# API contracts (stubs retrieval; needs fastapi/httpx from requirements.txt)
+pytest -q tests/test_api_unit.py
+
+# Eval harness
+python run_evals.py                          # live: Groq + seeded Chroma
+MOCK_LLM=1 python run_evals.py --offline     # CI-friendly, no API key
+```
+
+`eval_cases.json` holds the regression cases, including off-topic and unsupported-dosage
+prompts that must refuse. They pin behaviour on the seed corpus. GitHub Actions runs the
+offline unit suite on every push.
+
+## API
+
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/api/v1/ready
+
+curl -X POST http://localhost:8000/api/v1/query \
+  -H "Content-Type: application/json" \
+  -d '{"query":"What are first-line treatments for HFrEF?","max_sources":3,"collection":"clinical_guidelines"}'
+```
+
+The query response carries `sources`, `grounding_score`, `confidence`, `citations`,
+`citation_coverage`, and optional `warning` / `refusal_reason`. `/api/v1/ingest` and
+`/api/v1/audit` round out the surface; the audit store never contains raw queries.
+
+Useful things to try: a compound question (`"What are first-line treatments for HFrEF?
+Also which SGLT2 inhibitors are recommended?"`) exercises decomposition; `"What is the
+capital of France?"` returns a refusal with `refusal_reason` set.
+
+## Repository layout
 
 ```text
 backend/
   api/              routes, Pydantic models, rate limiter
   audit/            SQLite audit logger (hashed queries)
   config.py         env-backed settings
-  logging_config.py JSON / text logging
-  data/             seed clinical guideline content
+  data/             seed corpus (see Corpus above)
   rag/              decompose, retrieve, guards, citations, pipeline, evaluator
   tests/            offline unit + API contract tests
-  eval_cases.json   regression cases (not clinical validation)
+  eval_cases.json   regression cases
   run_evals.py      harness (--mock/--offline, --json)
-frontend/           restrained physician console
-docker-compose.yml  backend + frontend local bring-up
-.github/workflows/  CI for offline tests
+frontend/           React + Vite console
+docker-compose.yml  local bring-up
 ARCHITECTURE.md     design notes
 ```
 
-## Local Setup (detail)
+## Stack
 
-Quick start is under **Run locally** above. Full options:
-
-### Backend
-
-```bash
-cd backend
-python3.11 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp -n .env.example .env
-```
-
-Edit `backend/.env`:
-
-```bash
-GROQ_API_KEY=your_groq_key_here   # optional if MOCK_LLM=1
-CHROMA_PATH=./chroma_db
-AUDIT_DB_PATH=./audit.db
-MOCK_LLM=0
-RATE_LIMIT_PER_MINUTE=30
-```
-
-```bash
-uvicorn main:app --reload
-```
-
-First startup seeds `clinical_guidelines` if empty.
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open `http://localhost:5173`.
-
-### Docker Compose
-
-```bash
-# optional: export GROQ_API_KEY=...
-docker compose up --build
-```
-
-API: `http://localhost:8000` · UI: `http://localhost:5173`
-
-## Demo Script
-
-```text
-What SGLT2 inhibitors are recommended for heart failure?
-What are the diagnostic criteria for sepsis?
-What are first-line treatments for HFrEF?
-How should atrial fibrillation stroke risk be assessed?
-What anticoagulants are on the WHO Essential Medicines List?
-What are first-line treatments for HFrEF? Also which SGLT2 inhibitors are recommended?
-```
-
-Point out: short clinical answers, source cards, grounding score, citation coverage, Audit tab (hashes only), API + Groq status in the top bar.
-
-Guardrail tests:
-
-```text
-What is the capital of France?
-What is the weather in Toronto tomorrow?
-```
-
-Expected: refusal / low confidence, `refusal_reason` set, no fabricated clinical answer.
-
-## Tests & Evaluation
-
-Unit / contract tests (no embedding download for the pure-logic suite):
-
-```bash
-cd backend
-source .venv/bin/activate
-pytest -q tests/test_config.py tests/test_guards.py tests/test_decompose.py \
-  tests/test_evaluator.py tests/test_citations.py tests/test_rate_limit.py
-# API contracts stub retrieval (needs fastapi/httpx from requirements.txt):
-pytest -q tests/test_api_unit.py
-```
-
-Eval harness:
-
-```bash
-# Live path (Groq + seeded Chroma)
-python run_evals.py
-
-# Offline extractive path — CI-friendly, no API key
-MOCK_LLM=1 python run_evals.py --offline
-# alias: python run_evals.py --mock
-```
-
-Harness checks are **local regression signals only** — not clinical performance claims, not device validation.
-
-## API Reference
-
-### Liveness / readiness
-
-```bash
-curl http://localhost:8000/health | python -m json.tool
-curl http://localhost:8000/api/v1/ready | python -m json.tool
-```
-
-### Query
-
-```bash
-curl -X POST http://localhost:8000/api/v1/query \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "What are first-line treatments for HFrEF?",
-    "max_sources": 3,
-    "collection": "clinical_guidelines"
-  }' | python -m json.tool
-```
-
-Response includes `sources`, `grounding_score`, `confidence`, optional `warning` / `refusal_reason`, `citations`, and `citation_coverage`.
-
-### Ingest / audit
-
-Same shapes as before — see `/api/v1/ingest` and `/api/v1/audit`. Raw queries are never stored in the audit DB.
-
-## When ClinicalRAG Should Refuse
-
-- Clearly off-topic (trivia, weather, jokes).
-- No relevant guideline chunks after retrieval + grading.
-- Post-generation checks find dosage claims absent from retrieved sources.
-- (Low grounding does **not** hard-refuse today — it returns the answer with `confidence=low` and a warning. Off-topic / empty evidence / unsupported dosage do refuse.)
-
-Refusal is a product feature. A confident wrong answer is worse than "I cannot find this in the available guidelines."
-
-## Deployment
-
-Public **mock recruiter** demo (recommended for portfolio): **no Groq key** — see **[docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)** for exact Railway + Vercel env vars (`MOCK_LLM=1`, `ENABLE_INGEST=0`, `CORS_ORIGINS`, `VITE_API_URL`).
-
-Live Groq path (optional): Railway `backend/` with `MOCK_LLM=0` + `GROQ_API_KEY`, volume at `/data` (`CHROMA_PATH=/data/chroma_db`, `AUDIT_DB_PATH=/data/audit.db`); Vercel `frontend/` with `VITE_API_URL` pointing at Railway.
-
-## Verification (2026-09-13)
-
-Local gates run on this branch (MOCK_LLM / extractive path unless noted):
-
-- `pytest`: **23 passed**
-- `python run_evals.py --offline --json` with Chroma + sentence-transformers: **10/10** cases passed (regression signal only — not clinical accuracy)
-- Native uvicorn smoke: `/health`, `/api/v1/ready`, clinical query, off-topic refusal
-- `docker compose` backend: healthy; sepsis query grounded; France refused as `off_topic`
-- Frontend: `npm run build` succeeded
-- GitHub Actions `backend-tests` / `unit`: success on PR branch
-
-Do not quote these as clinical performance metrics.
+Python 3.11, FastAPI, LangGraph, LangChain Groq, ChromaDB, sentence-transformers
+(`all-MiniLM-L6-v2`), SQLite · React 18, Vite, Tailwind CSS v3, Axios.
 
 ## Limitations
 
-- `/api/v1/ingest` and `/api/v1/audit` are **unauthenticated** demo endpoints. Fine for localhost; public mock deploys must set `ENABLE_INGEST=0` and prefer a locked `CORS_ORIGINS` (see [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)). Compose defaults `CORS_ORIGINS=*`.
-
-- Not a medical device; not for real patient care.
-- Seed corpus is intentionally small.
-- In-process rate limiting is demo-grade; multi-replica needs shared limits.
-- Chroma local persistence is suitable for a local/demo deploy; shared vector storage is required for multi-instance production.
-- SQLite audit → PostgreSQL in production.
-- Real HIPAA deployments need BAAs, encryption, access control, monitoring, incident response, and formal clinical validation.
-
-## Live Demo Links
-
-<!-- DEMO_URL -->
-
-- Frontend (Vercel): https://clinicalrag-demo.vercel.app
-- API (interim tunnel): https://rebates-actor-included-taxation.trycloudflare.com/health (`mock_llm: true`) — replace with Railway/Render when CLI auth completes.
-- Backend health (Railway): `https://YOUR-BACKEND/health` — expect `"mock_llm": true` on the public mock deploy.
-- Hosting checklist: [docs/DEMO_HOSTING.md](docs/DEMO_HOSTING.md)
+- `/api/v1/ingest` and `/api/v1/audit` are unauthenticated. That is fine on localhost; any
+  networked deployment needs `ENABLE_INGEST=0` and a locked `CORS_ORIGINS` (compose
+  defaults to `*`).
+- The seed corpus is small and summarized (see **Corpus**).
+- Refusal uses lexical rules: an off-topic lexicon and dosage-string matching against the
+  retrieved text.
+- In-process rate limiting is single-replica only; multi-replica needs a shared limiter.
+- Local Chroma persistence and SQLite audit storage suit a single instance; shared vector
+  storage and Postgres would be required beyond that.
+- Handling PHI would require BAAs, encryption at rest, access control and monitoring, all
+  of which sit outside this repository.

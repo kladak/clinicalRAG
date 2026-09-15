@@ -1,6 +1,6 @@
-"""Lexical off-topic and unsupported-dosage heuristics for educational CDS.
+"""Lexical off-topic and unsupported-dosage heuristics.
 
-These are narrow regex/allowlist checks — not a general hallucination model
+These are narrow regex and allowlist checks, not a general hallucination model
 and not a substitute for clinical validation.
 """
 

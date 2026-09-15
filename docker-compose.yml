@@ -1,4 +1,4 @@
-# One-command local bring-up for the educational ClinicalRAG demo.
+# One-command local bring-up for ClinicalRAG.
 # Frontend talks to the backend via VITE_API_URL.
 services:
   backend:

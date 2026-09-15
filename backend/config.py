@@ -1,4 +1,4 @@
-"""Central settings — keep env reads in one place so routes/pipeline don't scatter getenv."""
+"""Central settings, so routes and the pipeline don't scatter getenv calls."""
 
 from __future__ import annotations
 
@@ -97,5 +97,5 @@ def get_settings() -> Settings:
 
 
 def reset_settings_cache() -> None:
-    """Test helper — clear lru_cache after monkeypatching env."""
+    """Test helper: clear the lru_cache after monkeypatching env."""
     get_settings.cache_clear()

@@ -1,7 +1,7 @@
 """ClinicalRAG evaluation harness.
 
 CI-friendly: set MOCK_LLM=1 (or pass --mock) to avoid Groq. Exit code 0 only
-when all cases pass. Does not invent clinical validation claims — these are
+when all cases pass. These are
 regression checks against the seed corpus.
 """
 

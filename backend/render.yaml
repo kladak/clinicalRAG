@@ -1,5 +1,5 @@
-# Render Blueprint alternative when Railway CLI auth is unavailable.
-# Public mock recruiter demo — see docs/DEMO_HOSTING.md
+# Render Blueprint for a public read-only deployment of the API.
+# Runs the mock LLM path (no API key) with ingest disabled.
 services:
   - type: web
     name: clinicalrag-api

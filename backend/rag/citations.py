@@ -2,7 +2,7 @@
 
 Map answer sentences back to retrieved chunks so the API can return
 overlap-based source titles. `grounded` means attribution overlap met a
-minimum ratio — aligned with evaluator content-token thresholds, not a
+minimum ratio, aligned with the evaluator's content-token thresholds rather than a
 clinical faithfulness certificate.
 """
 
