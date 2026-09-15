@@ -259,7 +259,14 @@ export default function App() {
         </header>
 
         <div className="px-5 py-6">
-          {activeView === 'query' ? <QueryInterface collection={selectedCollection} /> : <AuditView />}
+          {activeView === 'query' ? (
+            <QueryInterface
+              collection={selectedCollection}
+              extractiveMode={Boolean(health?.mock_llm || (health && !health.llm_configured))}
+            />
+          ) : (
+            <AuditView />
+          )}
         </div>
       </main>
     </div>

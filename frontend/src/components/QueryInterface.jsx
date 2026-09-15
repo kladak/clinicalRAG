@@ -12,7 +12,7 @@ const examples = [
   'What anticoagulants are on the WHO Essential Medicines List?',
 ]
 
-export default function QueryInterface({ collection }) {
+export default function QueryInterface({ collection, extractiveMode }) {
   const [query, setQuery] = useState(examples[0])
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -83,7 +83,7 @@ export default function QueryInterface({ collection }) {
         ) : null}
       </form>
 
-      {result ? <ResponseCard result={result} /> : null}
+      {result ? <ResponseCard result={result} extractiveMode={extractiveMode} /> : null}
       {result?.sources?.length ? <SourceCitations sources={result.sources} /> : null}
     </div>
   )

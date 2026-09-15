@@ -1,6 +1,6 @@
 import ConfidenceScore from './ConfidenceScore.jsx'
 
-export default function ResponseCard({ result }) {
+export default function ResponseCard({ result, extractiveMode }) {
   if (!result) return null
 
   const score = Math.max(0, Math.min(1, Number(result.grounding_score || 0)))
@@ -8,6 +8,9 @@ export default function ResponseCard({ result }) {
   const citationCoverage = Math.max(0, Math.min(1, Number(result.citation_coverage || 0)))
   const citations = Array.isArray(result.citations) ? result.citations : []
   const isRefusal = Boolean(result.refusal_reason)
+  const warning = extractiveMode
+    ? 'Extractive mode: answer assembled from retrieved guideline text.'
+    : result.warning
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -53,10 +56,10 @@ export default function ResponseCard({ result }) {
           </div>
         ) : null}
 
-        {result.warning ? (
+        {warning ? (
           <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             <span className="font-semibold">Grounding notice: </span>
-            {result.warning}
+            {warning}
           </div>
         ) : null}
 
