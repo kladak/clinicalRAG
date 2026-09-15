@@ -59,6 +59,7 @@ CLINICAL_TERMS = {
 SPLIT_PATTERNS = [
     r"\?\s+",
     r"\band\s+also\b",
+    r"\band\s+(?=which\b)",
     r"\bas\s+well\s+as\b",
     r";\s+",
 ]

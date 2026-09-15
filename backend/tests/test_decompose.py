@@ -16,6 +16,17 @@ def test_compound_split():
     assert decomposed.original.startswith("What are first-line")
 
 
+def test_compound_split_and_which():
+    decomposed = decompose_query(
+        "What are first-line treatments for HFrEF and which SGLT2 inhibitors are recommended?"
+    )
+    assert decomposed.is_compound is True
+    assert decomposed.subqueries == [
+        "What are first-line treatments for HFrEF?",
+        "which SGLT2 inhibitors are recommended?",
+    ]
+
+
 def test_retrieval_queries_include_boost():
     decomposed = decompose_query("How should atrial fibrillation stroke risk be assessed with CHA2DS2-VASc?")
     queries = decomposed.retrieval_queries
