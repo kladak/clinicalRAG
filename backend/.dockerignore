@@ -1,0 +1,15 @@
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.git
+.gitignore
+.env
+.env.*
+chroma_db
+*.db
+*.sqlite
+*.sqlite3
+validate_onnx_migration.py
+.DS_Store

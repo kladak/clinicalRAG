@@ -1,4 +1,4 @@
-# Render Blueprint for a public read-only deployment of the API.
+# Render Blueprint for the public read-only API.
 # Runs the mock LLM path (no API key) with ingest disabled.
 services:
   - type: web
@@ -13,19 +13,16 @@ services:
         value: "1"
       - key: ENABLE_INGEST
         value: "0"
+      # Set to the canonical frontend origin after the Vercel URL exists.
       - key: CORS_ORIGINS
-        value: "*"
+        sync: false
       - key: CHROMA_PATH
-        value: /data/chroma_db
+        value: /tmp/chroma_db
       - key: AUDIT_DB_PATH
-        value: /data/audit.db
+        value: /tmp/audit.db
       - key: RATE_LIMIT_PER_MINUTE
         value: "30"
       - key: LOG_JSON
         value: "1"
       - key: LOG_LEVEL
         value: INFO
-    disk:
-      name: clinicalrag-data
-      mountPath: /data
-      sizeGB: 1

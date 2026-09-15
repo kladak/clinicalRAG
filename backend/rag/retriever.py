@@ -3,8 +3,9 @@ import os
 os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
 
 import chromadb
+import numpy as np
 from chromadb.config import Settings
-from sentence_transformers import SentenceTransformer
+from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
 
 from config import get_settings
 
@@ -27,16 +28,26 @@ def reset_client() -> None:
     _client = None
 
 
+class _OnnxEncoder:
+    """all-MiniLM-L6-v2 via Chroma's bundled ONNX runtime.
+
+    Exposes the ``.encode(texts) -> ndarray`` surface the retrieval and
+    ingestion paths already call, so callers are unchanged. The model is
+    fetched once into ``~/.cache/chroma`` and is baked into the image at
+    build time, so process start needs no network.
+    """
+
+    def __init__(self) -> None:
+        self._fn = ONNXMiniLM_L6_V2()
+
+    def encode(self, texts):
+        return np.asarray(self._fn(list(texts)), dtype=np.float32)
+
+
 def get_encoder():
     global _encoder
     if _encoder is None:
-        model_name = get_settings().embedding_model
-        try:
-            # Prefer local cache (Docker bake / prior download) so demos do not
-            # hard-require outbound Hugging Face at process start.
-            _encoder = SentenceTransformer(model_name, local_files_only=True)
-        except Exception:
-            _encoder = SentenceTransformer(model_name)
+        _encoder = _OnnxEncoder()
     return _encoder
 
 

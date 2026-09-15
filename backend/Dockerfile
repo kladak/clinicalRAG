@@ -1,14 +1,12 @@
 FROM python:3.11-slim
 WORKDIR /app
 ENV ANONYMIZED_TELEMETRY=False \
-    HF_HUB_OFFLINE=1 \
-    TRANSFORMERS_OFFLINE=1 \
-    HF_HOME=/root/.cache/huggingface
+    PYTHONUNBUFFERED=1
 RUN apt-get update && apt-get install -y gcc g++ && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-# Bake embeddings into the image cache; runtime stays offline-friendly.
-RUN HF_HUB_OFFLINE=0 TRANSFORMERS_OFFLINE=0 python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+# Bake the ONNX MiniLM weights into the image so process start needs no network.
+RUN python -c "from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2; ONNXMiniLM_L6_V2()(['warmup'])"
 COPY . .
 EXPOSE 8000
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
