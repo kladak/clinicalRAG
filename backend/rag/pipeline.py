@@ -378,12 +378,9 @@ Answer based only on the guidelines above:"""
     if settings.mock_llm or not groq_configured():
         warning = state.get("warning")
         if settings.mock_llm and not warning:
-            warning = "Running in MOCK_LLM mode; returning an extractive answer from retrieved guidelines."
+            warning = "Extractive mode: answer assembled from retrieved guideline text."
         elif not warning:
-            warning = (
-                "Groq API key is not configured; returning an extractive answer "
-                "from retrieved guidelines."
-            )
+            warning = "Extractive mode: answer assembled from retrieved guideline text."
         return {**state, "answer": extractive_answer(state), "warning": warning}
 
     try:

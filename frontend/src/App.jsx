@@ -5,7 +5,7 @@ import DocumentIngester from './components/DocumentIngester.jsx'
 import QueryInterface from './components/QueryInterface.jsx'
 
 function HealthDot({ ok, llmConfigured }) {
-  const llmLabel = llmConfigured ? 'Groq connected' : 'Groq key missing'
+  const llmLabel = llmConfigured ? 'Groq connected' : 'Extractive mode'
 
   return (
     <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
@@ -15,7 +15,7 @@ function HealthDot({ ok, llmConfigured }) {
       </span>
       {ok ? (
         <span className="inline-flex items-center gap-2">
-          <span className={`h-2.5 w-2.5 rounded-full ${llmConfigured ? 'bg-teal' : 'bg-amber-500'}`} />
+          <span className="h-2.5 w-2.5 rounded-full bg-teal" />
           {llmLabel}
         </span>
       ) : null}
@@ -200,10 +200,18 @@ export default function App() {
         <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-3">
           <p className="text-xs font-semibold uppercase text-slate-400">Provider</p>
           <p className="mt-2 text-sm font-semibold text-white">
-            {health?.llm_provider ? health.llm_provider.toUpperCase() : 'Unknown'}
+            {health?.llm_configured
+              ? health.llm_provider?.toUpperCase()
+              : health
+                ? 'ONNX + Chroma'
+                : 'Unknown'}
           </p>
-          <p className={`mt-1 text-xs ${health?.llm_configured ? 'text-teal' : 'text-amber-200'}`}>
-            {health?.llm_configured ? 'Connected' : 'API key missing'}
+          <p className="mt-1 text-xs text-teal">
+            {health
+              ? health.llm_configured
+                ? 'Generative mode'
+                : 'Extractive mode'
+              : 'Status unavailable'}
           </p>
         </div>
 

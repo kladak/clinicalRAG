@@ -4,6 +4,11 @@
 
 Citation-grounded RAG for clinical guideline retrieval and question answering.
 
+[Live demo](https://clinicalrag-three.vercel.app)
+
+The public deployment runs in extractive mode: answers are assembled from retrieved
+guideline text without a Groq API key.
+
 ## What it does
 
 Generation is constrained to the ingested guideline text. Every answer sentence is mapped
@@ -31,7 +36,7 @@ LangGraph StateGraph
         |       compound split + clinical term lexicon (no LLM)
         |
         +--> retrieve
-        |       multi-query ChromaDB + MiniLM embeddings
+        |       multi-query ChromaDB + ONNX MiniLM embeddings
         |       deterministic rerank + merge cap
         |
         +--> grade_relevance
@@ -65,6 +70,8 @@ audit model, and production scaling tradeoffs.
   floor, so tests and evals run without an API key.
 - Audit logging hashes the query before storage (`audit/logger.py`), so the audit table
   never holds query text.
+- Local Docker validation measured approximately 251 MiB steady-state memory after
+  startup and a query.
 
 ## Corpus
 
@@ -163,8 +170,8 @@ ARCHITECTURE.md     design notes
 
 ## Stack
 
-Python 3.11, FastAPI, LangGraph, LangChain Groq, ChromaDB, sentence-transformers
-(`all-MiniLM-L6-v2`), SQLite · React 18, Vite, Tailwind CSS v3, Axios.
+Python 3.11, FastAPI, LangGraph, LangChain Groq, ChromaDB with
+`ONNXMiniLM_L6_V2`, SQLite · React 18, Vite, Tailwind CSS v3, Axios.
 
 ## Limitations
 

@@ -65,7 +65,7 @@ if not _ensure_pkg("langgraph"):
     sys.modules["langgraph"] = lg
     sys.modules["langgraph.graph"] = graph
 
-for _mod in ("chromadb", "sentence_transformers"):
+for _mod in ("chromadb",):
     if not _ensure_pkg(_mod):
         pytest.skip(
             f"{_mod} not installed; API contract tests need the full backend deps",
